@@ -1,5 +1,10 @@
-import urllib.request
-from http.client import HTTPConnection
+import six
+import six.moves.urllib.request
+
+if six.PY2:
+    from httplib import HTTPConnection
+else:
+    from http.client import HTTPConnection
 
 import json
 import time
