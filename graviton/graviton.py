@@ -1,5 +1,5 @@
 import six
-import six.moves.urllib.request
+from six.moves import urllib
 
 if six.PY2:
     from httplib import HTTPConnection
