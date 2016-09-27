@@ -2,9 +2,9 @@ import six
 from six.moves import urllib
 
 if six.PY2:
-    from httplib import HTTPConnection
+    from httplib import HTTPSConnection
 else:
-    from http.client import HTTPConnection
+    from http.client import HTTPSConnection
 
 import json
 import time
@@ -13,7 +13,7 @@ import os
 baseurl = "genetrail2.bioinf.uni-sb.de"
 basepath= ""
 
-con = HTTPConnection(baseurl)
+con = HTTPSConnection(baseurl)
 con.connect()
 
 def handleResponse(response):
