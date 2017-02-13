@@ -139,6 +139,72 @@ def getCategories(organism, pipeline):
 
     return res
 
+def setupReggae(key, order, method, impactScore, confidenceIntervals, adjustment="benjamini_yekutieli", **kwargs):
+	if not (order in ["increasingly", "decreasingly"]):
+		raise ValueError('order has to be one of the following: "increasingly", "decreasingly"')
+	if not (method in ["wrs-test", "ks-test"]):
+		raise ValueError('method has to be one of the following: "wrs-test", "ks-test"')
+	if not (impactScore in ["pearson_correlation", "spearman_correlation"]):
+		raise ValueError('impactScore has to be one of the following: "pearson_correlation", "spearman_correlation"')
+	if not (confidenceIntervals in ["percentile", "bca"]):
+		raise ValueError('confidenceIntervals has to be one of the following: "percentile", "bca"')
+	
+	res, status = doPost('/api/job/setup/reggae?session=%s' % key,
+		order = order,
+		method = method,
+		impactScore = impactScore,
+		confidenceIntervals = confidenceIntervals,
+		adjustment = adjustment,
+		**kwargs
+	)
+
+	if res["status"] != "success":
+		raise ValueError("Error during filter setup: " + res["message"])
+
+def setupRIF(which, key, scoring_mode, **kwargs):
+	if not (str(which) in ["1", "2"]):
+		raise ValueError('which has to be one of the following: "1", "2"')
+	if not (scoring_mode in ["raw", "standardize"]):
+		raise ValueError('scoring_mode has to be one of the following: "raw", "standardize"')
+	
+	res, status = doPost('/api/job/setup/rif%s?session=%s' % (str(which), key),
+		adjustment="benjamini_hochberg",
+		scoring_mode = scoring_mode,
+		**kwargs
+	)
+
+	if res["status"] != "success":
+		raise ValueError("Error during setup service: " + res["message"])
+
+def setupRIF1(key, scoring_mode, **kwargs):
+	setupRIF(1, key, scoring_mode, **kwargs)
+
+def setupRIF2(key, scoring_mode, **kwargs):
+	setupRIF(2, key, scoring_mode, **kwargs)
+
+def setupTepic(key, intervals, geneList="", windowSize, duplicateMethod="median"):
+	
+	if windowSize < 0.0:
+		raise ValueError("windowSize has to be non-negative")
+	
+	res, status = doPost('/api/job/setup/tepic?session=%s' % key,
+		intervals = intervals,
+		geneList = geneList,
+		window = windowSize,
+		duplicateMethod = duplicateMethod
+	)
+	
+	if res["status"] != "success":
+		raise ValueError("Error during setup service: " + res["message"])
+
+def setupInvoke(key, **kwargs):
+	res, status = doPost('/api/job/setup/tepic?session=%s' % key,
+		**kwargs
+	)
+	
+	if res["status"] != "success":
+		raise ValueError("Error during setup service: " + res["message"])
+
 def runJob(key):
     doGet('/api/job/start?session=' + key)
     while True:
