@@ -182,7 +182,7 @@ def setupRIF1(key, scoring_mode, **kwargs):
 def setupRIF2(key, scoring_mode, **kwargs):
 	setupRIF(2, key, scoring_mode, **kwargs)
 
-def setupTepic(key, intervals, geneList="", windowSize, duplicateMethod="median"):
+def setupTepic(key, intervals, windowSize, geneList="",duplicateMethod="median"):
 	
 	if windowSize < 0.0:
 		raise ValueError("windowSize has to be non-negative")
