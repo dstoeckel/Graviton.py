@@ -45,6 +45,23 @@ def doPost(endpoint, **kwargs):
     con.request("POST", basepath + endpoint, data, headers)
 
     return handleResponse(con.getresponse())
+    
+def runJob(key):
+    doGet('/api/job/start?session=' + key)
+    while True:
+        time.sleep(2)
+        res, code = doGet('/api/job/query?session=' + key)
+        if res["status"] == 'status':
+            print(res["message"])
+        elif res["status"] == 'success':
+            return res["results"]
+        else:
+            raise ValueError("Unexpected status during computation: '" + res["message"] + "'")
+
+def downloadResult(key, res, path):
+    url = "http://%s%s/api/resource/%s/download/?session=%s" % (baseurl, basepath, str(res), key)
+    urllib.request.urlretrieve(url, path)
+
 
 def getSession():
     response, code = doGet('/api/session')
@@ -63,7 +80,7 @@ def uploadFile(key, path):
 
     res, status = doPost('/api/upload?session=' + key,
         value = content,
-		displayName = os.path.basename(path)
+        displayName = os.path.basename(path)
     )
 
     if res["status"] != "success":
@@ -123,13 +140,13 @@ def setupORA(key, res, categories, ref):
     return setupEnrichment(key, "ora", res, categories, reference="/user/" + str(ref));
 
 def setupFilter(key, resource, f, param):
-	res, status = doPost('/api/job/setup/scoreFilter?session=%s' % key,
-		input = resource,
-		filters = '["%s:%f"]' % (f, param)
-	)
+    res, status = doPost('/api/job/setup/scoreFilter?session=%s' % key,
+        input = resource,
+        filters = '["%s:%f"]' % (f, param)
+    )
 
-	if res["status"] != "success":
-		raise ValueError("Error during filter setup: " + res["message"])
+    if res["status"] != "success":
+        raise ValueError("Error during filter setup: " + res["message"])
 
 def getCategories(organism, pipeline):
     res, status = doGet('/api/categories?organism=%d&pipeline=%s' % (organism, pipeline))
@@ -140,85 +157,77 @@ def getCategories(organism, pipeline):
     return res
 
 def setupReggae(key, scores, matrix, order, method, impactScore, confidenceIntervals, regulations, **kwargs):
-	if not (order in ["increasingly", "decreasingly"]):
-		raise ValueError('order has to be one of the following: "increasingly", "decreasingly"')
-	if not (method in ["wrs-test", "ks-test"]):
-		raise ValueError('method has to be one of the following: "wrs-test", "ks-test"')
-	if not (impactScore in ["pearson_correlation", "spearman_correlation"]):
-		raise ValueError('impactScore has to be one of the following: "pearson_correlation", "spearman_correlation"')
-	if not (confidenceIntervals in ["percentile", "bca"]):
-		raise ValueError('confidenceIntervals has to be one of the following: "percentile", "bca"')
-	
-	res, status = doPost('/api/job/setup/reggae?session=%s' % key,
-		scores = scores
-		matrix = matrix,
-		order = order,
-		method = method,
-		impactScore = impactScore,
-		confidenceIntervals = confidenceIntervals,
-		regulations = regulations,
-		**kwargs
-	)
+    if not (order in ["increasingly", "decreasingly"]):
+        raise ValueError('order has to be one of the following: "increasingly", "decreasingly"')
+    if not (method in ["wrs-test", "ks-test"]):
+        raise ValueError('method has to be one of the following: "wrs-test", "ks-test"')
+    if not (impactScore in ["pearson_correlation", "spearman_correlation"]):
+        raise ValueError('impactScore has to be one of the following: "pearson_correlation", "spearman_correlation"')
+    if not (confidenceIntervals in ["percentile", "bca"]):
+        raise ValueError('confidenceIntervals has to be one of the following: "percentile", "bca"')
 
-	if res["status"] != "success":
-		raise ValueError("Error during filter setup: " + res["message"])
+    res, status = doPost('/api/job/setup/reggae?session=%s' % key,
+        scores = scores
+        matrix = matrix,
+        order = order,
+        method = method,
+        impactScore = impactScore,
+        confidenceIntervals = confidenceIntervals,
+        regulations = regulations,
+        **kwargs
+    )
 
-def setupRIF(which, key, scoring_mode, **kwargs):
-	if not (str(which) in ["1", "2"]):
-		raise ValueError('which has to be one of the following: "1", "2"')
-	if not (scoring_mode in ["raw", "standardize"]):
-		raise ValueError('scoring_mode has to be one of the following: "raw", "standardize"')
-	
-	res, status = doPost('/api/job/setup/rif%s?session=%s' % (str(which), key),
-		adjustment="benjamini_hochberg",
-		scoring_mode = scoring_mode,
-		**kwargs
-	)
+    if res["status"] != "success":
+        raise ValueError("Error during filter setup: " + res["message"])
 
-	if res["status"] != "success":
-		raise ValueError("Error during setup service: " + res["message"])
+def setupRIF(which, key, scores, matrix, scoring_mode, sample_group, reference_group, regulations, **kwargs):
+    if not (str(which) in ["1", "2"]):
+        raise ValueError('which has to be one of the following: "1", "2"')
+    if not (scoring_mode in ["raw", "standardize"]):
+        raise ValueError('scoring_mode has to be one of the following: "raw", "standardize"')
 
-def setupRIF1(key, scoring_mode, **kwargs):
-	setupRIF(1, key, scoring_mode, **kwargs)
+    res, status = doPost('/api/job/setup/rif%s?session=%s' % (str(which), key),
+        scores = scores,
+        matrix = matrix,
+        scoring_mode = scoring_mode,
+        sg = sample_group,
+        rg = reference_group,
+        regulations = regulations,
+        **kwargs
+    )
 
-def setupRIF2(key, scoring_mode, **kwargs):
-	setupRIF(2, key, scoring_mode, **kwargs)
+    if res["status"] != "success":
+        raise ValueError("Error during setup service: " + res["message"])
 
-def setupTepic(key, intervals, windowSize, geneList="",duplicateMethod="median"):
-	
-	if windowSize < 0.0:
-		raise ValueError("windowSize has to be non-negative")
-	
-	res, status = doPost('/api/job/setup/tepic?session=%s' % key,
-		intervals = intervals,
-		geneList = geneList,
-		window = windowSize,
-		duplicateMethod = duplicateMethod
-	)
-	
-	if res["status"] != "success":
-		raise ValueError("Error during setup service: " + res["message"])
+def setupRIF1(key, scores, matrix, scoring_mode, sample_group, reference_group, regulations, **kwargs):
+    setupRIF(1, key, scores, matrix, scoring_mode, sample_group, reference_group, regulations, **kwargs)
 
-def setupInvoke(key, **kwargs):
-	res, status = doPost('/api/job/setup/tepic?session=%s' % key,
-		**kwargs
-	)
-	
-	if res["status"] != "success":
-		raise ValueError("Error during setup service: " + res["message"])
+def setupRIF2(key, scores, matrix, scoring_mode, sample_group, reference_group, regulations, **kwargs):
+    setupRIF(2, key, scores, matrix, scoring_mode, sample_group, reference_group, regulations, **kwargs)
 
-def runJob(key):
-    doGet('/api/job/start?session=' + key)
-    while True:
-        time.sleep(2)
-        res, code = doGet('/api/job/query?session=' + key)
-        if res["status"] == 'status':
-            print(res["message"])
-        elif res["status"] == 'success':
-            return res["results"]
-        else:
-            raise ValueError("Unexpected status during computation: '" + res["message"] + "'")
+def regulatorORA(key, scores, method, regulations, **kwargs):
+    if not (method in ["ora", "binom", "hyper", "fisher"]):
+        raise ValueError('method has to be one of the following: "ora", "binom", "hyper", "fisher"')
 
-def downloadResult(key, res, path):
-    url = "http://%s%s/api/resource/%s/download/?session=%s" % (baseurl, basepath, str(res), key)
-    urllib.request.urlretrieve(url, path)
+    res, status = doPost('/api/job/setup/rif%s?session=%s' % (str(which), key),
+        scores = scores,
+        method = method,
+        regulations = regulations,
+        **kwargs
+    )
+
+    if res["status"] != "success":
+        raise ValueError("Error during setup service: " + res["message"])
+
+def setupTepic(key, intervals, windowSize, pwms, **kwargs):
+    if windowSize < 0.0:
+        raise ValueError("windowSize has to be non-negative")
+
+    res, status = doPost('/api/job/setup/tepic?session=%s' % key,
+        intervals = intervals,
+        window = windowSize,
+        pwms = pwms
+    )
+
+    if res["status"] != "success":
+        raise ValueError("Error during setup service: " + res["message"])

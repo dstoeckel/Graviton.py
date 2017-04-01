@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'graviton',
-    version = '0.2',
+    version = '0.3',
     packages = ['graviton'],
     author = 'Daniel Stöckel',
     author_email = 'dstoeckel@bioinf.uni-sb.de',
