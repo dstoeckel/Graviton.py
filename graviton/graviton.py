@@ -139,7 +139,7 @@ def getCategories(organism, pipeline):
 
     return res
 
-def setupReggae(key, order, method, impactScore, confidenceIntervals, adjustment="benjamini_yekutieli", **kwargs):
+def setupReggae(key, scores, matrix, order, method, impactScore, confidenceIntervals, regulations, **kwargs):
 	if not (order in ["increasingly", "decreasingly"]):
 		raise ValueError('order has to be one of the following: "increasingly", "decreasingly"')
 	if not (method in ["wrs-test", "ks-test"]):
@@ -150,11 +150,13 @@ def setupReggae(key, order, method, impactScore, confidenceIntervals, adjustment
 		raise ValueError('confidenceIntervals has to be one of the following: "percentile", "bca"')
 	
 	res, status = doPost('/api/job/setup/reggae?session=%s' % key,
+       		scores = scores
+        	matrix = matrix
 		order = order,
 		method = method,
 		impactScore = impactScore,
 		confidenceIntervals = confidenceIntervals,
-		adjustment = adjustment,
+		regulations = regulations
 		**kwargs
 	)
 
