@@ -167,7 +167,7 @@ def setupReggae(key, scores, matrix, order, method, impactScore, confidenceInter
         raise ValueError('confidenceIntervals has to be one of the following: "percentile", "bca"')
 
     res, status = doPost('/api/job/setup/reggae?session=%s' % key,
-        scores = scores
+        scores = scores,
         matrix = matrix,
         order = order,
         method = method,
