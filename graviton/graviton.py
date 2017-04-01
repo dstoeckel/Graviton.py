@@ -174,6 +174,7 @@ def setupReggae(key, scores, matrix, order, method, impactScore, confidenceInter
         impactScore = impactScore,
         confidenceIntervals = confidenceIntervals,
         regulations = regulations,
+        adjustment="benjamini_yekutieli",
         **kwargs
     )
 
@@ -193,6 +194,7 @@ def setupRIF(which, key, scores, matrix, scoring_mode, sample_group, reference_g
         sg = sample_group,
         rg = reference_group,
         regulations = regulations,
+        adjustment="benjamini_yekutieli",
         **kwargs
     )
 
@@ -213,6 +215,7 @@ def regulatorORA(key, scores, method, regulations, **kwargs):
         scores = scores,
         method = method,
         regulations = regulations,
+        adjustment="benjamini_yekutieli",
         **kwargs
     )
 
