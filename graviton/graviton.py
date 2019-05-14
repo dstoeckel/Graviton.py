@@ -9,6 +9,11 @@ else:
 import json
 import time
 import os
+import ssl
+
+if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
+    getattr(ssl, '_create_unverified_context', None)): 
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 baseurl = "genetrail2.bioinf.uni-sb.de"
 basepath= ""
@@ -211,7 +216,7 @@ def regulatorORA(key, scores, method, regulations, **kwargs):
     if not (method in ["ora", "binom", "hyper", "fisher"]):
         raise ValueError('method has to be one of the following: "ora", "binom", "hyper", "fisher"')
 
-    res, status = doPost('/api/job/setup/rif%s?session=%s' % (str(which), key),
+    res, status = doPost('/api/job/setup/regulator_ora?session=%s' % key,
         scores = scores,
         method = method,
         regulations = regulations,
